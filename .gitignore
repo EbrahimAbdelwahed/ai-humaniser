@@ -4,12 +4,18 @@
 
 runs/*
 !runs/.gitkeep
+experiments/
+examples/output/
+*.docx
+_*.txt
 
 __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .venv/
+.flash/
+.runpod/
 dist/
 build/
 *.egg-info/

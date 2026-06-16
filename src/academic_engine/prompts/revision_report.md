@@ -1,0 +1,1 @@
+Return a final report with refined text, major revisions, preservation analysis, academic quality analysis, style analysis, detector signal analysis, warnings, and optional detector audit. Do not claim guaranteed undetectability.

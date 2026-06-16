@@ -1,0 +1,1 @@
+Patient education affects medication adherence because people often misunderstand risk information after a short consultation. Johnson et al. (2020) found that reminder messages improved adherence by 18% among adults managing hypertension. This does not mean that reminders replace clinical judgment, but it shows why communication design matters in routine care.
