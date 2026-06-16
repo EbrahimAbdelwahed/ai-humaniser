@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Academic Engine</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="masthead">
+        <div class="brand-block">
+          <span class="product-mark" aria-hidden="true">AE</span>
+          <div>
+            <p class="eyebrow">Academic writing diagnostics</p>
+            <h1>Academic Engine</h1>
+            <p class="masthead-copy">Check detector signals, understand writing risks, and refine academic text while preserving citations and structure.</p>
+          </div>
+        </div>
+        <div class="system-strip" aria-label="System status" role="status">
+          <span id="health" class="status-pill pending">Checking backend</span>
+          <span id="fast-status" class="status-pill muted">Fast-DetectGPT</span>
+        </div>
+      </header>
+
+      <section class="workflow-card" aria-label="Workflow">
+        <div class="mode-bar" role="tablist" aria-label="Choose workflow">
+          <button class="mode-button active" data-tab="detect" type="button" role="tab" aria-selected="true">
+            <span class="mode-title">Detector check</span>
+            <span class="mode-copy">Understand the signal profile of pasted text</span>
+          </button>
+          <button class="mode-button" data-tab="refine" type="button" role="tab" aria-selected="false">
+            <span class="mode-title">Refine draft</span>
+            <span class="mode-copy">Improve naturalness with preservation gates</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <form id="form" class="editor-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Document workspace</p>
+              <label for="text" class="panel-title">Paste text to evaluate</label>
+              <p id="limit-copy">Use a short academic passage for a fast diagnostic run.</p>
+            </div>
+            <span id="word-count" class="word-count">0 words</span>
+          </div>
+
+          <textarea
+            id="text"
+            name="text"
+            spellcheck="true"
+            required
+            placeholder="Paste a paragraph, section, or short chapter excerpt..."
+          ></textarea>
+
+          <div class="input-notes" aria-label="Preservation reminders">
+            <span>Citations stay untouched</span>
+            <span>Terminology is preserved</span>
+            <span>Remote checks run only when selected</span>
+          </div>
+
+          <div class="run-console">
+            <div class="preset-group" aria-label="Check profile">
+              <span class="field-label">Check profile</span>
+              <div class="preset-buttons">
+                <button class="preset-button active" data-preset="quick" type="button">
+                  <strong>Quick</strong>
+                  <span>Local signals</span>
+                </button>
+                <button class="preset-button" data-preset="strong" type="button">
+                  <strong>Strong</strong>
+                  <span>Local + Fast</span>
+                </button>
+                <button class="preset-button" data-preset="remote" type="button">
+                  <strong>Remote</strong>
+                  <span>Fast only</span>
+                </button>
+              </div>
+            </div>
+
+            <details class="advanced-settings">
+              <summary>Advanced settings</summary>
+              <div class="advanced-grid">
+                <label>
+                  Detector preset
+                  <select id="detectors" name="detectors">
+                    <option value="local">Local ensemble</option>
+                    <option value="local+fast-detectgpt">Local + Fast-DetectGPT</option>
+                    <option value="official-fast-detectgpt">Fast-DetectGPT only</option>
+                  </select>
+                </label>
+                <label>
+                  Execution
+                  <select id="detector-execution" name="detector_execution">
+                    <option value="sequential">Sequential</option>
+                    <option value="parallel">Parallel</option>
+                  </select>
+                </label>
+                <label id="cycles-field" hidden>
+                  Refinement depth
+                  <select id="cycles" name="cycles">
+                    <option value="1">Standard pass</option>
+                    <option value="2">Second pass if needed</option>
+                  </select>
+                </label>
+              </div>
+            </details>
+
+            <button id="submit" class="primary-action" type="submit">
+              <span id="submit-label">Run detector check</span>
+            </button>
+          </div>
+        </form>
+
+        <aside class="result-panel" aria-live="polite">
+          <div class="panel-head result-head">
+            <div>
+              <p class="eyebrow">Diagnostic report</p>
+              <h2 id="result-title">Ready for a run</h2>
+              <p id="job-status">Paste text and choose a check profile.</p>
+            </div>
+            <button id="copy-output" class="ghost-action" type="button" disabled>Copy</button>
+          </div>
+
+          <div id="recommendation" class="recommendation-card">
+            <span class="recommendation-kicker">Next action</span>
+            <strong>Run a check to get a writing-level recommendation.</strong>
+            <p>Results will prioritize risk band, confidence, preservation, and practical revision guidance before provider telemetry.</p>
+          </div>
+
+          <div id="summary" class="summary-grid" aria-label="Summary metrics"></div>
+          <div id="result" class="result-body">
+            <div class="empty-state">
+              <strong>No analysis yet</strong>
+              <p>The report will show the aggregate signal first, then optional advanced detector details.</p>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="info-band" id="context-note" aria-label="Run context">
+        <div>
+          <strong>Diagnostic, not verdict</strong>
+          <p>Detector signals can disagree. The app translates them into risk and confidence bands rather than absolute claims.</p>
+        </div>
+        <div>
+          <strong>Preservation first</strong>
+          <p>Refinement is accepted only when citations, terminology, and structure survive the rewrite gates.</p>
+        </div>
+        <div>
+          <strong>Cost control</strong>
+          <p>Quick checks stay local. Strong and Remote profiles may call Fast-DetectGPT when the backend is configured.</p>
+        </div>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

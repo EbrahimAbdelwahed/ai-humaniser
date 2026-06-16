@@ -1,0 +1,1 @@
+Return JSON matching SemanticRepresentation. Extract claims, entities, relations, disciplinary terms, citation spans, numeric values, argument structure, uncertainty markers, and non-negotiable preservation items. Preserve citation text exactly.
