@@ -7,6 +7,7 @@ from academic_engine.detectors import (
     HeuristicDetectorProvider,
     HuggingFaceOpenAIDetectorProvider,
     OfficialDetectorProvider,
+    RunPodOfficialDetectorProvider,
     detector_providers_from_config,
     official_detector_providers,
 )
@@ -342,8 +343,8 @@ def test_official_flash_endpoint_id_autowires_binoculars_and_fast_detectgpt(tmp_
     assert "--endpoint-id endpoint-official" in providers["official_binoculars"].cli
     assert "--detector official_binoculars" in providers["official_binoculars"].cli
     assert "--timeout 777" in providers["official_binoculars"].cli
-    assert "runpod_official_cli.py" in providers["official_fast_detectgpt"].cli
-    assert "--detector official_fast_detectgpt" in providers["official_fast_detectgpt"].cli
+    assert isinstance(providers["official_fast_detectgpt"], RunPodOfficialDetectorProvider)
+    assert providers["official_fast_detectgpt"].endpoint_id == "endpoint-official"
     assert providers["official_ghostbuster"].cli is None
 
 
@@ -365,6 +366,21 @@ def test_official_flash_endpoint_timeout_controls_local_wrapper_timeout(tmp_path
 
     assert providers["official_binoculars"].timeout_seconds == 1200
     assert providers["official_fast_detectgpt"].timeout_seconds == 1200
+
+
+def test_official_fast_detectgpt_falls_back_to_cli_without_flash_endpoint(tmp_path, monkeypatch):
+    monkeypatch.delenv("ACADEMIC_ENGINE_OFFICIAL_FLASH_ENDPOINT_ID", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "ACADEMIC_ENGINE_OFFICIAL_FAST_DETECTGPT_CLI=/opt/fast-detectgpt-wrapper\n",
+        encoding="utf-8",
+    )
+
+    config = EngineConfig.from_env(env_file=env_file)
+    providers = {provider.provider_name: provider for provider in official_detector_providers(config)}
+
+    assert isinstance(providers["official_fast_detectgpt"], OfficialDetectorProvider)
+    assert providers["official_fast_detectgpt"].cli == "/opt/fast-detectgpt-wrapper"
 
 
 def test_official_detectors_unavailable_without_config():

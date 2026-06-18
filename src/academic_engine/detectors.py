@@ -512,6 +512,82 @@ class OfficialDetectorProvider(CommunityDetectorProvider):
         return analyze_with_cli_provider(self, text, shlex.split(self.cli), timeout_seconds=self.timeout_seconds)
 
 
+class RunPodOfficialDetectorProvider(CommunityDetectorProvider):
+    provider_kind = ProviderKind.api
+
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        endpoint_id: str | None,
+        api_key: str | None,
+        timeout_seconds: int = 900,
+        install_hint: str,
+    ) -> None:
+        self.provider_name = provider_name
+        self.endpoint_id = endpoint_id
+        self.api_key = api_key
+        self.timeout_seconds = timeout_seconds
+        self.install_hint = install_hint
+
+    async def _call_endpoint(self, endpoint_cls, text: str) -> dict:
+        endpoint = endpoint_cls(id=self.endpoint_id)
+        job = await endpoint.runsync(
+            {
+                "detector": self.provider_name,
+                "text": text,
+                "timeout_seconds": self.timeout_seconds,
+            },
+            timeout=self.timeout_seconds,
+        )
+        if hasattr(job, "output"):
+            if not getattr(job, "done", True) and hasattr(job, "wait"):
+                job = await job.wait(timeout=self.timeout_seconds)
+            if getattr(job, "error", None):
+                raise RuntimeError(str(job.error))
+            output = job.output
+        else:
+            output = job
+        if not isinstance(output, dict):
+            raise ValueError(f"Endpoint returned {type(output).__name__}, expected JSON object.")
+        return output
+
+    def analyze(self, text: str) -> DetectorResult:
+        if not self.endpoint_id:
+            return self.unavailable(text, "No RunPod Flash endpoint id is configured for this official detector.")
+        if not self.api_key:
+            return self.unavailable(text, "RUNPOD_API_KEY is not configured for RunPod Flash official detector provider.")
+        try:
+            from runpod_flash import Endpoint
+        except Exception as error:
+            return self.unavailable(text, f"runpod_flash is not installed or importable: {error}")
+        previous_key = os.environ.get("RUNPOD_API_KEY")
+        os.environ["RUNPOD_API_KEY"] = self.api_key
+        try:
+            output = asyncio.run(self._call_endpoint(Endpoint, text))
+        except Exception as error:
+            return self.unavailable(text, f"RunPod Flash endpoint call failed for {self.provider_name}: {error}")
+        finally:
+            if previous_key is None:
+                os.environ.pop("RUNPOD_API_KEY", None)
+            else:
+                os.environ["RUNPOD_API_KEY"] = previous_key
+        if output.get("available") is False:
+            return self.unavailable(
+                text,
+                str(output.get("error") or output.get("failure_mode") or f"{self.provider_name} unavailable on RunPod Flash endpoint."),
+                output,
+            )
+        try:
+            score, confidence, label, raw = parse_cli_detector_output(json.dumps(output))
+        except Exception as error:
+            return self.unavailable(text, f"RunPod Flash official detector output could not be parsed: {error}", output)
+        raw["endpoint_id"] = self.endpoint_id
+        raw["detector"] = self.provider_name
+        raw["route"] = "runpod_flash_direct"
+        return self.from_score(text=text, score=score, confidence=confidence, label=label, raw_result=raw)
+
+
 class FlashDetectorProvider(CommunityDetectorProvider):
     provider_kind = ProviderKind.api
     supported_detectors = {"binoculars", "ghostbuster", "mage", "radar", "openai_roberta", "chatgpt_roberta"}
@@ -694,9 +770,34 @@ def community_detector_providers(config) -> list[DetectorProvider]:
 def official_detector_providers(config) -> list[DetectorProvider]:
     timeout_seconds = getattr(config, "official_detector_timeout_seconds", 300)
     binoculars_cli = getattr(config, "official_binoculars_cli", None) or _official_flash_cli(config, "official_binoculars")
-    fast_detectgpt_cli = getattr(config, "official_fast_detectgpt_cli", None) or _official_flash_cli(config, "official_fast_detectgpt")
+    official_flash_endpoint_id = getattr(config, "official_flash_endpoint_id", None)
+    runpod_api_key = getattr(config, "runpod_api_key", None)
+    fast_detectgpt_cli = getattr(config, "official_fast_detectgpt_cli", None)
     if getattr(config, "official_flash_endpoint_id", None):
         timeout_seconds = max(timeout_seconds, int(getattr(config, "official_flash_timeout_seconds", 900)))
+    fast_detectgpt_provider: DetectorProvider
+    if official_flash_endpoint_id:
+        fast_detectgpt_provider = RunPodOfficialDetectorProvider(
+            provider_name="official_fast_detectgpt",
+            endpoint_id=official_flash_endpoint_id,
+            api_key=runpod_api_key,
+            timeout_seconds=timeout_seconds,
+            install_hint=(
+                "Set RUNPOD_API_KEY and ACADEMIC_ENGINE_OFFICIAL_FLASH_ENDPOINT_ID for the deployed "
+                "official RunPod Flash endpoint."
+            ),
+        )
+    else:
+        fast_detectgpt_provider = OfficialDetectorProvider(
+            provider_name="official_fast_detectgpt",
+            cli=fast_detectgpt_cli,
+            timeout_seconds=timeout_seconds,
+            install_hint=(
+                "Install/cache the official Fast-DetectGPT repository locally, then set "
+                "ACADEMIC_ENGINE_OFFICIAL_FAST_DETECTGPT_CLI to a stdin-to-JSON/numeric wrapper command, "
+                "or deploy the official RunPod Flash endpoint and set ACADEMIC_ENGINE_OFFICIAL_FLASH_ENDPOINT_ID."
+            ),
+        )
     return [
         OfficialDetectorProvider(
             provider_name="official_binoculars",
@@ -717,16 +818,7 @@ def official_detector_providers(config) -> list[DetectorProvider]:
                 "ACADEMIC_ENGINE_OFFICIAL_GHOSTBUSTER_CLI to a stdin-to-JSON/numeric wrapper command."
             ),
         ),
-        OfficialDetectorProvider(
-            provider_name="official_fast_detectgpt",
-            cli=fast_detectgpt_cli,
-            timeout_seconds=timeout_seconds,
-            install_hint=(
-                "Install/cache the official Fast-DetectGPT repository locally, then set "
-                "ACADEMIC_ENGINE_OFFICIAL_FAST_DETECTGPT_CLI to a stdin-to-JSON/numeric wrapper command, "
-                "or deploy the official RunPod Flash endpoint and set ACADEMIC_ENGINE_OFFICIAL_FLASH_ENDPOINT_ID."
-            ),
-        ),
+        fast_detectgpt_provider,
     ]
 
 
