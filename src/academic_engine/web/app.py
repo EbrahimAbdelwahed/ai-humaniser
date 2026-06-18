@@ -647,7 +647,7 @@ def summarize_refinement_result(result) -> dict[str, Any]:
 
 def create_app(runner: JobRunner | None = None):
     if FastAPI is None:
-        raise RuntimeError("Web dependencies are not installed. Install with `pip install -e .[web]`.")
+        raise RuntimeError("Web dependencies are not installed. Install project runtime dependencies.")
     job_runner = runner or JobRunner()
     app = FastAPI(title="AI Humaniser Academic Engine", version="0.1.0")
     if StaticFiles is not None and STATIC_DIR.is_dir():
@@ -874,7 +874,7 @@ app = create_app() if FastAPI is not None else None
 
 def main() -> int:
     if FastAPI is None:
-        print("Web dependencies are not installed. Install with `pip install -e .[web]`.")
+        print("Web dependencies are not installed. Install project runtime dependencies.")
         return 2
     import uvicorn
 
