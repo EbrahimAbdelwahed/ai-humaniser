@@ -10,4 +10,8 @@ if str(SRC) not in sys.path:
 from academic_engine.web.app import create_app
 
 
-app = create_app()
+fastapi_app = create_app()
+
+
+async def app(scope, receive, send):
+    await fastapi_app(scope, receive, send)

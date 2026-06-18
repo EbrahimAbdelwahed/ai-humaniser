@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import inspect
 from types import SimpleNamespace
 
 import pytest
@@ -15,10 +16,11 @@ from academic_engine.web import app as web_app
 
 
 def test_vercel_entrypoint_exports_asgi_app():
-    from api.index import app
+    from api.index import app, fastapi_app
 
     assert callable(app)
-    assert getattr(app, "title", "") == "AI Humaniser Academic Engine"
+    assert inspect.iscoroutinefunction(app)
+    assert getattr(fastapi_app, "title", "") == "AI Humaniser Academic Engine"
 
 
 def _sample_detector(name: str = "local_sample", *, available: bool = True):
