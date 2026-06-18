@@ -869,10 +869,7 @@ HTML_PAGE = """<!doctype html>
 """
 
 
-try:
-    app = create_app() if FastAPI is not None else None
-except Exception:  # pragma: no cover - app factory remains available for explicit diagnostics.
-    app = None
+app = create_app() if FastAPI is not None else None
 
 
 def main() -> int:

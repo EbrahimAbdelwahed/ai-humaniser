@@ -14,6 +14,13 @@ from academic_engine.schemas import ProviderKind
 from academic_engine.web import app as web_app
 
 
+def test_vercel_entrypoint_exports_asgi_app():
+    from api.index import app
+
+    assert callable(app)
+    assert getattr(app, "title", "") == "AI Humaniser Academic Engine"
+
+
 def _sample_detector(name: str = "local_sample", *, available: bool = True):
     result = detector_result(
         provider_name=name,
