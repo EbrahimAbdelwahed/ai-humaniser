@@ -568,7 +568,7 @@ def summarize_detector_result(text: str, detectors) -> dict[str, Any]:
     unavailable = [detector.provider_name for detector in detectors if not detector.available]
     warnings = dedupe_strings(list(notes) + list(score.false_positive_risk_notes))
     if unavailable:
-        warnings.append(f"Unavailable detectors: {', '.join(unavailable)}.")
+        warnings.append(f"Unavailable detectors: {', '.join(unavailable_detector_details(detectors))}.")
     return {
         "summary": {
             "risk": risk,
@@ -593,6 +593,18 @@ def dedupe_strings(items: list[str]) -> list[str]:
             seen.add(item)
             deduped.append(item)
     return deduped
+
+
+def unavailable_detector_details(detectors) -> list[str]:
+    details: list[str] = []
+    for detector in detectors:
+        if detector.available:
+            continue
+        detail = detector.provider_name
+        if detector.error:
+            detail = f"{detail} ({detector.error})"
+        details.append(detail)
+    return details
 
 
 def summarize_refinement_result(result) -> dict[str, Any]:
