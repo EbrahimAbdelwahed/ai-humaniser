@@ -3,85 +3,145 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Academic Engine</title>
+    <meta name="theme-color" content="#f1ede3" />
+    <meta name="description" content="Evidence-aware diagnostics and careful refinement for academic writing." />
+    <title>Academic Engine — Evidence-aware writing review</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#document-workspace">Skip to document workspace</a>
+
     <main class="app-shell">
       <header class="masthead">
-        <div class="brand-block">
-          <span class="product-mark" aria-hidden="true">AE</span>
-          <div>
-            <p class="eyebrow">Academic writing diagnostics</p>
-            <h1>Academic Engine</h1>
-            <p class="masthead-copy">Check detector signals, understand writing risks, and refine academic text while preserving citations and structure.</p>
-          </div>
-        </div>
-        <div class="system-strip" aria-label="System status" role="status">
-          <span id="health" class="status-pill pending">Checking backend</span>
-          <span id="fast-status" class="status-pill muted">Fast-DetectGPT</span>
+        <a class="brand-block" href="#top" aria-label="Academic Engine home">
+          <span class="product-mark" aria-hidden="true"><span>AE</span></span>
+          <span class="brand-copy">
+            <strong>Academic Engine</strong>
+            <small>Writing evidence desk</small>
+          </span>
+        </a>
+
+        <div class="system-strip" aria-label="System status" role="status" aria-live="polite">
+          <span id="health" class="status-pill pending"><i aria-hidden="true"></i>Checking backend</span>
+          <span id="fast-status" class="status-pill muted"><i aria-hidden="true"></i>Fast-DetectGPT</span>
         </div>
       </header>
 
-      <section class="workflow-card" aria-label="Workflow">
+      <section class="hero" id="top" aria-labelledby="page-title">
+        <div class="hero-intro">
+          <p class="eyebrow"><span>Vol. 01</span> Academic writing diagnostics</p>
+          <h1 id="page-title">Review the signal.<br /><em>Keep the scholarship.</em></h1>
+        </div>
+        <div class="hero-note">
+          <span class="annotation-mark" aria-hidden="true">01</span>
+          <p>Examine detector evidence and refine academic prose without treating uncertain signals as a verdict.</p>
+          <div class="hero-principles" aria-label="Core principles">
+            <span>Evidence-aware</span>
+            <span>Citation-safe</span>
+            <span>Human-reviewed</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="workflow-card" aria-label="Choose a workflow">
+        <div class="workflow-label">
+          <span>Desk mode</span>
+          <small>Choose one task</small>
+        </div>
         <div class="mode-bar" role="tablist" aria-label="Choose workflow">
-          <button class="mode-button active" data-tab="detect" type="button" role="tab" aria-selected="true">
-            <span class="mode-title">Detector check</span>
-            <span class="mode-copy">Understand the signal profile of pasted text</span>
+          <button
+            id="detect-tab"
+            class="mode-button active"
+            data-tab="detect"
+            type="button"
+            role="tab"
+            aria-controls="workspace-region"
+            aria-selected="true"
+            tabindex="0"
+          >
+            <span class="mode-number">01</span>
+            <span>
+              <strong class="mode-title">Inspect signals</strong>
+              <small class="mode-copy">Read the evidence profile of a passage</small>
+            </span>
           </button>
-          <button class="mode-button" data-tab="refine" type="button" role="tab" aria-selected="false">
-            <span class="mode-title">Refine draft</span>
-            <span class="mode-copy">Improve naturalness with preservation gates</span>
+          <button
+            id="refine-tab"
+            class="mode-button"
+            data-tab="refine"
+            type="button"
+            role="tab"
+            aria-controls="workspace-region"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span class="mode-number">02</span>
+            <span>
+              <strong class="mode-title">Refine carefully</strong>
+              <small class="mode-copy">Revise with explicit preservation gates</small>
+            </span>
           </button>
         </div>
       </section>
 
-      <section class="workspace">
-        <form id="form" class="editor-panel">
-          <div class="panel-head">
+      <section class="workspace" id="workspace-region">
+        <form id="form" class="editor-panel" aria-labelledby="editor-title">
+          <div class="folio-bar">
+            <span>Working document</span>
+            <span>Folio <b>01</b></span>
+          </div>
+
+          <div class="panel-head" id="document-workspace">
             <div>
               <p class="eyebrow">Document workspace</p>
-              <label for="text" class="panel-title">Paste text to evaluate</label>
-              <p id="limit-copy">Use a short academic passage for a fast diagnostic run.</p>
+              <label for="text" class="panel-title" id="editor-title">Paste the passage you want to examine</label>
+              <p id="limit-copy">Use a focused academic passage for a clear diagnostic reading.</p>
             </div>
             <span id="word-count" class="word-count">0 words</span>
           </div>
 
-          <textarea
-            id="text"
-            name="text"
-            spellcheck="true"
-            required
-            placeholder="Paste a paragraph, section, or short chapter excerpt..."
-          ></textarea>
+          <div class="paper-field">
+            <span class="line-numbers" aria-hidden="true">01<br />02<br />03<br />04<br />05<br />06<br />07<br />08<br />09<br />10<br />11<br />12</span>
+            <textarea
+              id="text"
+              name="text"
+              spellcheck="true"
+              required
+              aria-describedby="limit-copy preservation-notes"
+              placeholder="Paste a paragraph, section, or short chapter excerpt…"
+            ></textarea>
+          </div>
 
-          <div class="input-notes" aria-label="Preservation reminders">
-            <span>Citations stay untouched</span>
-            <span>Terminology is preserved</span>
-            <span>Remote checks run only when selected</span>
+          <div class="input-notes" id="preservation-notes" aria-label="Preservation boundaries">
+            <span><i aria-hidden="true">✓</i>Citations unchanged</span>
+            <span><i aria-hidden="true">✓</i>Terminology preserved</span>
+            <span><i aria-hidden="true">↗</i>Remote only by choice</span>
           </div>
 
           <div class="run-console">
-            <div class="preset-group" aria-label="Check profile">
-              <span class="field-label">Check profile</span>
+            <div class="preset-group" aria-labelledby="profile-label">
+              <div class="field-heading">
+                <span class="field-label" id="profile-label">Evidence profile</span>
+                <small>Depth and data boundary</small>
+              </div>
               <div class="preset-buttons">
-                <button class="preset-button active" data-preset="quick" type="button">
-                  <strong>Quick</strong>
-                  <span>Local signals</span>
+                <button class="preset-button active" data-preset="quick" type="button" aria-pressed="true">
+                  <span class="preset-index">A</span>
+                  <span><strong>Quick</strong><small>Local style signals</small></span>
                 </button>
-                <button class="preset-button" data-preset="strong" type="button">
-                  <strong>Strong</strong>
-                  <span>Local + Fast</span>
+                <button class="preset-button" data-preset="strong" type="button" aria-pressed="false">
+                  <span class="preset-index">B</span>
+                  <span><strong>Strong</strong><small>Local + model</small></span>
                 </button>
-                <button class="preset-button" data-preset="remote" type="button">
-                  <strong>Remote</strong>
-                  <span>Fast only</span>
+                <button class="preset-button" data-preset="remote" type="button" aria-pressed="false">
+                  <span class="preset-index">C</span>
+                  <span><strong>Remote</strong><small>Model evidence only</small></span>
                 </button>
               </div>
             </div>
 
             <details class="advanced-settings">
-              <summary>Advanced settings</summary>
+              <summary>Method settings <span aria-hidden="true">＋</span></summary>
               <div class="advanced-grid">
                 <label>
                   Detector preset
@@ -109,51 +169,75 @@
             </details>
 
             <button id="submit" class="primary-action" type="submit">
-              <span id="submit-label">Run detector check</span>
+              <span id="submit-label">Inspect this passage</span>
+              <span class="action-arrow" aria-hidden="true">→</span>
             </button>
           </div>
         </form>
 
-        <aside class="result-panel" aria-live="polite">
+        <aside class="result-panel" aria-live="polite" aria-labelledby="result-title">
+          <div class="folio-bar result-folio">
+            <span>Evidence report</span>
+            <span>Folio <b>02</b></span>
+          </div>
+
           <div class="panel-head result-head">
             <div>
-              <p class="eyebrow">Diagnostic report</p>
-              <h2 id="result-title">Ready for a run</h2>
-              <p id="job-status">Paste text and choose a check profile.</p>
+              <p class="eyebrow">Editorial reading</p>
+              <h2 id="result-title">Awaiting a passage</h2>
+              <p id="job-status">Choose a profile, then run the review.</p>
             </div>
-            <button id="copy-output" class="ghost-action" type="button" disabled>Copy</button>
+            <button id="copy-output" class="ghost-action" type="button" disabled>
+              <span>Copy</span><i aria-hidden="true">⧉</i>
+            </button>
           </div>
 
           <div id="recommendation" class="recommendation-card">
-            <span class="recommendation-kicker">Next action</span>
-            <strong>Run a check to get a writing-level recommendation.</strong>
-            <p>Results will prioritize risk band, confidence, preservation, and practical revision guidance before provider telemetry.</p>
+            <span class="recommendation-kicker">Margin note · 01</span>
+            <strong>Your interpretation will begin here.</strong>
+            <p>The report leads with evidence quality and a practical next step. Provider telemetry stays secondary.</p>
+            <span class="tone-chip neutral">Not yet examined</span>
           </div>
 
           <div id="summary" class="summary-grid" aria-label="Summary metrics"></div>
           <div id="result" class="result-body">
             <div class="empty-state">
-              <strong>No analysis yet</strong>
-              <p>The report will show the aggregate signal first, then optional advanced detector details.</p>
+              <span class="empty-glyph" aria-hidden="true">¶</span>
+              <strong>No evidence collected</strong>
+              <p>Your aggregate signal, confidence boundary, and optional method details will appear in this folio.</p>
             </div>
           </div>
+
+          <p class="report-caveat"><span aria-hidden="true">*</span> A diagnostic aid, never proof of authorship.</p>
         </aside>
       </section>
 
-      <section class="info-band" id="context-note" aria-label="Run context">
+      <section class="info-band" id="context-note" aria-label="Method and run context">
+        <div class="info-intro">
+          <p class="eyebrow">Reading notes</p>
+          <strong>Know what the evidence can — and cannot — say.</strong>
+        </div>
         <div>
+          <span class="annotation-mark" aria-hidden="true">01</span>
           <strong>Diagnostic, not verdict</strong>
-          <p>Detector signals can disagree. The app translates them into risk and confidence bands rather than absolute claims.</p>
+          <p>Signals can disagree, so findings remain bands rather than absolute claims.</p>
         </div>
         <div>
+          <span class="annotation-mark" aria-hidden="true">02</span>
           <strong>Preservation first</strong>
-          <p>Refinement is accepted only when citations, terminology, and structure survive the rewrite gates.</p>
+          <p>Refinement must keep citations, terminology, and structure intact.</p>
         </div>
         <div>
-          <strong>Cost control</strong>
-          <p>Quick checks stay local. Strong and Remote profiles may call Fast-DetectGPT when the backend is configured.</p>
+          <span class="annotation-mark" aria-hidden="true">03</span>
+          <strong>Cost boundary</strong>
+          <p>Quick stays local. Strong and Remote request model evidence when available.</p>
         </div>
       </section>
+
+      <footer class="site-footer">
+        <p>Academic Engine <span>—</span> a careful reading instrument for academic prose.</p>
+        <p>Evidence quality is disclosed on every run.</p>
+      </footer>
     </main>
     <script src="/static/app.js"></script>
   </body>

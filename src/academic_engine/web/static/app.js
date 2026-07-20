@@ -55,21 +55,23 @@ function setTab(tab) {
     const active = button.dataset.tab === tab;
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active));
+    button.setAttribute("tabindex", active ? "0" : "-1");
   });
   cyclesField.hidden = tab !== "refine";
-  submitLabel.textContent = tab === "detect" ? "Run detector check" : "Refine draft";
-  statusLine.textContent = tab === "detect" ? "Paste text and choose a check profile." : "Paste text, choose a check profile, then refine.";
-  resultTitle.textContent = "Ready for a run";
+  submitLabel.textContent = tab === "detect" ? "Inspect this passage" : "Refine this passage";
+  statusLine.textContent = tab === "detect" ? "Choose a profile, then run the review." : "Choose a profile, then begin careful refinement.";
+  resultTitle.textContent = "Awaiting a passage";
   summary.innerHTML = "";
   state.lastOutput = "";
   copyOutput.disabled = true;
+  copyOutput.innerHTML = '<span>Copy</span><i aria-hidden="true">⧉</i>';
   recommendation.innerHTML = recommendationCard({
-    kicker: tab === "detect" ? "Next action" : "Refinement plan",
-    title: tab === "detect" ? "Run a check to get a writing-level recommendation." : "Run refinement to compare before and after risk.",
+    kicker: tab === "detect" ? "Margin note · 01" : "Refinement note · 01",
+    title: tab === "detect" ? "Your interpretation will begin here." : "The preservation decision will begin here.",
     copy:
       tab === "detect"
-        ? "Results will prioritize risk band, confidence, and practical revision guidance before provider telemetry."
-        : "The accepted output will appear as readable prose with score movement and preservation notes.",
+        ? "The report leads with evidence quality and a practical next step. Provider telemetry stays secondary."
+        : "The accepted draft will appear as readable prose with score movement and explicit preservation notes.",
     tone: "neutral",
   });
   result.innerHTML = emptyState(
@@ -82,7 +84,11 @@ function setTab(tab) {
 
 function setPreset(preset) {
   state.preset = preset;
-  presetButtons.forEach((button) => button.classList.toggle("active", button.dataset.preset === preset));
+  presetButtons.forEach((button) => {
+    const active = button.dataset.preset === preset;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
   const config = presetMap[preset];
   detectorPreset.value = config.detectors;
   detectorExecution.value = config.execution;
@@ -90,7 +96,13 @@ function setPreset(preset) {
 }
 
 function emptyState(copy) {
-  return `<div class="empty-state"><strong>No analysis yet</strong><p>${escapeHtml(copy)}</p></div>`;
+  return `<div class="empty-state"><span class="empty-glyph" aria-hidden="true">¶</span><strong>No evidence collected</strong><p>${escapeHtml(copy)}</p></div>`;
+}
+
+function setStatusText(element, copy) {
+  const marker = document.createElement("i");
+  marker.setAttribute("aria-hidden", "true");
+  element.replaceChildren(marker, document.createTextNode(copy));
 }
 
 function updateWordCount() {
@@ -122,6 +134,12 @@ function riskBand(risk) {
 }
 
 function confidenceBand(summaryData = {}) {
+  if (summaryData.evidence_tier === "heuristic_only") {
+    return { label: "proxy only", copy: "Only local style heuristics answered; this is not a calibrated AI-authorship result." };
+  }
+  if (summaryData.evidence_tier === "unavailable") {
+    return { label: "unavailable", copy: "No usable detector evidence was returned." };
+  }
   const disagreement = summaryData.disagreement;
   const unavailable = summaryData.unavailable_count ?? 0;
   if (unavailable > 0 && typeof disagreement === "number" && disagreement > 0.34) {
@@ -150,7 +168,10 @@ function recommendationFromDetection(payload) {
         : `Keep the text stable; only make targeted clarity edits if needed.`;
   return {
     kicker: "Recommendation",
-    title: `${capitalize(band.label)} with ${confidence.label} confidence`,
+    title:
+      summaryData.evidence_tier === "heuristic_only"
+        ? `${capitalize(band.label)} style risk — not AI probability`
+        : `${capitalize(band.label)} with ${confidence.label} confidence`,
     copy: `${confidence.copy} Main writing signal: ${topIssue}. ${action}`,
     tone: band.tone,
   };
@@ -238,7 +259,7 @@ function renderDetect(payload) {
   recommendation.innerHTML = recommendationCard(recommendationFromDetection(payload));
   summary.innerHTML =
     metric("Risk band", band.label, band.hint) +
-    metric("Risk score", summaryData.risk) +
+    metric(summaryData.evidence_tier === "heuristic_only" ? "Style-risk score" : "Risk score", summaryData.risk) +
     metric("Confidence", confidence.label) +
     metric("Signals", `${summaryData.available_count ?? 0}/${(summaryData.available_count ?? 0) + (summaryData.unavailable_count ?? 0)} available`);
   result.innerHTML = `
@@ -378,12 +399,25 @@ function requestBody() {
   };
 }
 
-tabs.forEach((button) => button.addEventListener("click", () => setTab(button.dataset.tab)));
+tabs.forEach((button) => {
+  button.addEventListener("click", () => setTab(button.dataset.tab));
+  button.addEventListener("keydown", (event) => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    const nextTab = state.tab === "detect" ? "refine" : "detect";
+    setTab(nextTab);
+    document.querySelector(`[data-tab="${nextTab}"]`).focus();
+  });
+});
 presetButtons.forEach((button) => button.addEventListener("click", () => setPreset(button.dataset.preset)));
 detectorPreset.addEventListener("change", () => {
   const matchingPreset = Object.entries(presetMap).find(([, config]) => config.detectors === detectorPreset.value);
   if (matchingPreset) state.preset = matchingPreset[0];
-  presetButtons.forEach((button) => button.classList.toggle("active", button.dataset.preset === state.preset));
+  presetButtons.forEach((button) => {
+    const active = button.dataset.preset === state.preset;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
   renderContextNote();
 });
 textInput.addEventListener("input", updateWordCount);
@@ -445,11 +479,15 @@ form.addEventListener("submit", async (event) => {
 
 copyOutput.addEventListener("click", async () => {
   if (!state.lastOutput) return;
-  await navigator.clipboard.writeText(state.lastOutput);
-  copyOutput.textContent = "Copied";
+  try {
+    await navigator.clipboard.writeText(state.lastOutput);
+    copyOutput.innerHTML = '<span>Copied</span><i aria-hidden="true">✓</i>';
+  } catch {
+    copyOutput.innerHTML = '<span>Copy failed</span><i aria-hidden="true">!</i>';
+  }
   setTimeout(() => {
-    copyOutput.textContent = "Copy";
-  }, 1200);
+    copyOutput.innerHTML = '<span>Copy</span><i aria-hidden="true">⧉</i>';
+  }, 1400);
 });
 
 fetch("/health")
@@ -458,11 +496,14 @@ fetch("/health")
     state.maxWords = payload.max_words || state.maxWords;
     state.fastConfigured = Boolean(payload.official_fast_detectgpt?.configured);
     state.remotePolicy = payload.remote_policy || null;
-    health.textContent = `Backend ready · ${state.maxWords} words`;
+    setStatusText(health, `Backend ready · ${state.maxWords} words`);
     health.classList.remove("pending", "error");
-    fastStatus.textContent = state.fastConfigured
-      ? `Fast-DetectGPT ready · ${payload.official_fast_detectgpt.route}`
-      : "Fast-DetectGPT not configured";
+    setStatusText(
+      fastStatus,
+      state.fastConfigured
+        ? `Fast-DetectGPT ready · ${payload.official_fast_detectgpt.route}`
+        : "Fast-DetectGPT not configured"
+    );
     fastStatus.classList.toggle("muted", !state.fastConfigured);
     fastStatus.classList.toggle("error", !state.fastConfigured);
     limitCopy.textContent = `Limit ${state.maxWords} words. Quick stays local; Strong and Remote request Fast-DetectGPT only when backend policy allows it.`;
@@ -470,7 +511,7 @@ fetch("/health")
     renderContextNote();
   })
   .catch(() => {
-    health.textContent = "Backend unavailable";
+    setStatusText(health, "Backend unavailable");
     health.classList.remove("pending");
     health.classList.add("error");
   });
